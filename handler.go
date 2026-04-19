@@ -59,7 +59,9 @@ func startFiberApp(app *fiber.App, options startConfig) {
 func startEventBasedHandler(handler any, options startConfig) {
 	if isLocalLambda() {
 		app := registerNewFiberApp(handler, options)
-		app.Listen(fmt.Sprintf("127.0.0.1:%s", options.LocalPort))
+		addr := fmt.Sprintf("127.0.0.1:%s", options.LocalPort)
+		fmt.Printf("local-event-lambda: listening on http://%s%s\n", addr, options.LocalServerPath)
+		app.Listen(addr)
 	}
 
 	lambda.StartWithOptions(handler, options.lambdaOptions...)
@@ -67,7 +69,8 @@ func startEventBasedHandler(handler any, options startConfig) {
 
 func registerNewFiberApp(handler any, options startConfig) *fiber.App {
 	app := fiber.New()
-	lambdaHandler := lambda.NewHandler(handler) // Set a reasonable timeout for local testing
+	// since we are catching the with options at a higher level, we can just call the withOptions function here
+	lambdaHandler := lambda.NewHandlerWithOptions(handler, options.lambdaOptions...)
 	fiberHandler := func(c *fiber.Ctx) error {
 		body := c.Body()
 		response, err := lambdaHandler.Invoke(c.Context(), body)
