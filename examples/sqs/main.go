@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aws/aws-lambda-go/events"
 	localeventlambda "local-event-lambda"
-)
 
+	"github.com/aws/aws-lambda-go/events"
+)
 
 type envConfig struct {
 	QueueName string
