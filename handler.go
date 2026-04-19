@@ -11,9 +11,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-
-
-
 // start lambda handler with default options
 func Start(handler any) {
 	startLambda(handler)
@@ -25,27 +22,20 @@ func StartWithOptions(handler any, options ...Option) {
 }
 
 func startLambda(handler any, options ...Option) {
-	opts := localConfig{
-		Port:            defaultPort,
+	opts := startConfig{
+		LocalPort:       defaultPort,
 		LocalServerPath: defaultLocalServerPath,
 	}
-	if len(options) > 0 {
-		for _, option := range options {
-			option(&opts)
-		}
-		if opts.Port == "" {
-			opts.Port = defaultOptions.Port
-		}
-		if opts.LocalServerPath == "" {
-			opts.LocalServerPath = defaultOptions.LocalServerPath
-		}
+
+	for _, option := range options {
+		option(&opts)
 	}
 
 	switch reflect.TypeOf(handler) {
-		// either our lambda is a fiber app handler or a regular event based handler
+	// either our lambda is a fiber app handler or a regular event based handler
 	case reflect.TypeOf(&fiber.App{}):
 		startFiberApp(handler.(*fiber.App), opts)
-	
+
 	default:
 		startEventBasedHandler(handler, opts)
 	}
@@ -58,25 +48,24 @@ func isLocalLambda() bool {
 	return true
 }
 
-func startFiberApp(app *fiber.App, options localConfig) {
+func startFiberApp(app *fiber.App, options startConfig) {
 	if isLocalLambda() {
-		app.Listen(fmt.Sprintf("127.0.0.1:%s", options.Port))
-	} 
-	
+		app.Listen(fmt.Sprintf("127.0.0.1:%s", options.LocalPort))
+	}
+
 	lambda.Start(fiberproxy.New(app).ProxyWithContext)
 }
 
-func startEventBasedHandler(handler any, options localConfig) {
+func startEventBasedHandler(handler any, options startConfig) {
 	if isLocalLambda() {
 		app := registerNewFiberApp(handler, options)
-		app.Listen(fmt.Sprintf("127.0.0.1:%s", options.Port))
+		app.Listen(fmt.Sprintf("127.0.0.1:%s", options.LocalPort))
 	}
 
-	lambda.Start(handler)
+	lambda.StartWithOptions(handler, options.lambdaOptions...)
 }
 
-
-func registerNewFiberApp(handler any, options ...localConfig) *fiber.App {
+func registerNewFiberApp(handler any, options startConfig) *fiber.App {
 	app := fiber.New()
 	lambdaHandler := lambda.NewHandler(handler) // Set a reasonable timeout for local testing
 	fiberHandler := func(c *fiber.Ctx) error {
@@ -91,4 +80,3 @@ func registerNewFiberApp(handler any, options ...localConfig) *fiber.App {
 	app.Post(options.LocalServerPath, fiberHandler)
 	return app
 }
-
