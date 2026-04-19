@@ -11,12 +11,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// start lambda handler with default options
+// Start starts the lambda handler with default options.
 func Start(handler any) {
 	startLambda(handler)
 }
 
-// start lambda handler with custom options
+// StartWithOptions starts the lambda handler with custom options.
 func StartWithOptions(handler any, options ...Option) {
 	startLambda(handler, options...)
 }
@@ -31,21 +31,12 @@ func startLambda(handler any, options ...Option) {
 		option(&opts)
 	}
 
-	switch reflect.TypeOf(handler) {
-	// either our lambda is a fiber app handler or a regular event based handler
-	case reflect.TypeOf(&fiber.App{}):
+	switch {
+	case isFiberApp(handler):
 		startFiberApp(handler.(*fiber.App), opts)
-
 	default:
 		startEventBasedHandler(handler, opts)
 	}
-}
-
-func isLocalLambda() bool {
-	if _, ok := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME"); ok {
-		return false
-	}
-	return true
 }
 
 func startFiberApp(app *fiber.App, options startConfig) {
@@ -69,7 +60,6 @@ func startEventBasedHandler(handler any, options startConfig) {
 
 func registerNewFiberApp(handler any, options startConfig) *fiber.App {
 	app := fiber.New()
-	// since we are catching the with options at a higher level, we can just call the withOptions function here
 	lambdaHandler := lambda.NewHandlerWithOptions(handler, options.lambdaOptions...)
 	fiberHandler := func(c *fiber.Ctx) error {
 		body := c.Body()
@@ -82,4 +72,15 @@ func registerNewFiberApp(handler any, options startConfig) *fiber.App {
 
 	app.Post(options.LocalServerPath, fiberHandler)
 	return app
+}
+
+func isLocalLambda() bool {
+	if _, ok := os.LookupEnv("AWS_LAMBDA_FUNCTION_NAME"); ok {
+		return false
+	}
+	return true
+}
+
+func isFiberApp(handler any) bool {
+	return reflect.TypeOf(handler) == reflect.TypeOf(&fiber.App{})
 }

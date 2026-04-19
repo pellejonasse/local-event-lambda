@@ -9,6 +9,7 @@ import (
 	localeventlambda "local-event-lambda"
 )
 
+
 type envConfig struct {
 	QueueName string
 }

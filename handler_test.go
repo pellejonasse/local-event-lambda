@@ -101,3 +101,8 @@ func TestFiberAppHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
+
+func TestRouting(t *testing.T) {
+	assert.True(t, isFiberApp(fiber.New()))
+	assert.False(t, isFiberApp(func(ctx context.Context, e events.SQSEvent) error { return nil }))
+}
