@@ -1,4 +1,4 @@
-module local-event-lambda
+module github.com/pellejonasse/local-event-lambda
 
 go 1.25.5
 

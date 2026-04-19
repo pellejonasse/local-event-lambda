@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	localeventlambda "local-event-lambda"
+	localeventlambda "github.com/pellejonasse/local-event-lambda"
 
 	"github.com/aws/aws-lambda-go/events"
 )

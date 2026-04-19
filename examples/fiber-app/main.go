@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	localeventlambda "local-event-lambda"
+	localeventlambda "github.com/pellejonasse/local-event-lambda"
 
 	"github.com/gofiber/fiber/v2"
 )
